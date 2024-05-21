@@ -15,6 +15,7 @@ This is a simple webcam that uses a Raspberry Pi Zero wireless with a Pi Camera 
 This configures your Raspberry Pi Zero wireless to act as a RSTP camera server, streaming your Pi camera over the network.  It configures your system from out of the box to having a network video stream.  I use this to monitor my laser cutter.  The camera and Pi are sitting on the transparent lid of my laser cutter facing down, which means I need to flip the horizontal and vertical image.  I have set the resolution for be 640x480, but you are welcome to change that to whatever suits you best.  It installs nginx as a simple webserver to allow me to quickly see the stream configuration only.  v4l2rtspserver streams the video image from the Pi with minimal CPU overhead. I also use motion/motioneye/motioneyeos running on another server to process and store the streamed images.
 
 ## Installation
+1. Skip Balena, use RasPi Imager
 1. Download Raspbian 10 Buster Lite image from [https://downloads.raspberrypi.org/raspbian_lite_latest](https://downloads.raspberrypi.org/raspbian_lite_latest)
 1. Download and install Balener Etcher from [https://www.balena.io/etcher/](https://www.balena.io/etcher/)
 1. Write the image to an SD card using Balener Etcher
@@ -39,7 +40,7 @@ This configures your Raspberry Pi Zero wireless to act as a RSTP camera server, 
     sudo su -
     apt-get update
     apt-get upgrade
-    apt-get install git cmake nginx vim screen -y
+    apt-get install git cmake nginx screen -y
     mkdir ~/git
     cd ~/git
     git clone https://github.com/mpromonet/v4l2rtspserver.git
@@ -47,24 +48,24 @@ This configures your Raspberry Pi Zero wireless to act as a RSTP camera server, 
     ```
 1. Configure nginx:
     1. `rm /var/www/html/index.nginx-debian.html`
-    1. `vim /var/www/html/index.html`
+    1. `nano /var/www/html/index.html`
        ```
        <!DOCTYPE html>
        <html>
        <head>
-       <title>Glowforge Camera</title>
+       <title>My Camera</title>
        </head>
        <body>
        <h1>Glowforge Camera</h1>
        <p>IP: <a href="rtsp://192.168.10.129:8554/unicast">rtsp://192.168.10.129:8554/unicast</a></p>
-       <p>Local: <a href="rtsp://glowcam:8554/unicast">rtsp://glowcam:8554/unicast</a></p>
+       <p>Local: <a href="rtsp://mycam:8554/unicast">rtsp://mycam:8554/unicast</a></p>
        </body>
        </html>
        ```
 1. Change hostname:
-    `vim /etc/hostname`
+    `nano /etc/hostname`
     and change to:
-    `glowcam`
+    `mycam`
 1. Enable camera:
     `raspi-config`
     "Update"
@@ -73,17 +74,17 @@ This configures your Raspberry Pi Zero wireless to act as a RSTP camera server, 
     "OK"
     "Finish"
 1. Disable camera LED:
-    `vim /boot/config.txt`
+    `nano /boot/config.txt`
     And add:
     `disable_camera_led=1`
 1. Configure RTSP streaming:
-    `vim /etc/rc.local` then add the following lines to the bottom of the file BEFORE the `exit 0`
+    `nano /etc/rc.local` then add the following lines to the bottom of the file BEFORE the `exit 0`
     ```
-    v4l2-ctl --set-ctrl video_bitrate=500000
-    v4l2-ctl -p 5
-    v4l2-ctl --set-ctrl vertical_flip=1
-    v4l2-ctl --set-ctrl horizontal_flip=1
-    v4l2rtspserver -W 640 -H 480 /dev/video0 &
+    #v4l2-ctl --set-ctrl video_bitrate=500000
+    #v4l2-ctl -p 5
+    #v4l2-ctl --set-ctrl vertical_flip=1
+    #v4l2-ctl --set-ctrl horizontal_flip=1
+    v4l2rtspserver -W 1920 -H 1080 /dev/video0 &
     ```
 1. Reboot via `shutdown -r now`
 1. Using VLC access the video stream by visiting `rtsp://192.168.10.129:8554/unicast`
@@ -93,10 +94,10 @@ This configures your Raspberry Pi Zero wireless to act as a RSTP camera server, 
 ## How to change video streaming settings
 In this example setup I have configured it with the following settings:
 - a reduced resolution of 640x480, rather than the default of 2592x1944
-- a reduced frames per second of 5, rather than 25
-- a reduced bitrate of 500000, rather than the default of 1000000
-- vertical flip of image
-- horizontal flip of image
+- a reduced frames per second of 5, rather than 25 (disabled)
+- a reduced bitrate of 500000, rather than the default of 1000000 (disabled)
+- vertical flip of image (disabled)
+- horizontal flip of image (disabled)
 
 You can customise these to anything that works best for you.  These settings reduced the bandwidth requirements for me, but in theory you can set it to be 2592x1944 @25fps or even 1080p @30fps, 720p @60fps, or 480p @90fps.
 
